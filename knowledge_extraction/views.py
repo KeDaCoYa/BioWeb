@@ -3,7 +3,7 @@ import json
 from django.shortcuts import render
 from django.http import HttpResponse
 # Create your views here.
-from ner.utils import get_text_classification_url
+from knowledge_extraction.utils import get_text_classification_url
 
 
 def index(request):

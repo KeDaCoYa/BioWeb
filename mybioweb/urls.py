@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path,include
 
 urlpatterns = [
-    path('ner/',include('ner.urls')),
+    path('knowledge_extraction/',include('knowledge_extraction.urls')),
     path('admin/', admin.site.urls),
 
 ]

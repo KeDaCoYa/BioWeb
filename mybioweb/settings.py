@@ -40,9 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'ner',
+    'knowledge_extraction',
     'database',
-    'relation_extraction',
 ]
 
 MIDDLEWARE = [
@@ -63,9 +62,7 @@ TEMPLATES = [
         'DIRS': [
 
             os.path.join(BASE_DIR, 'database/templates'),
-            os.path.join(BASE_DIR, 'relation_extraction/templates'),
-            os.path.join(BASE_DIR, 'ner/templates'),
-
+            os.path.join(BASE_DIR, 'knowledge_extraction/templates'),
             os.path.join(BASE_DIR, 'templates'),
         ],
         'APP_DIRS': True,
@@ -134,8 +131,7 @@ UPLOAD_URL = '/upload/'
 
 # 设置根目录的静态资源文件夹public_static
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),
-                    os.path.join(BASE_DIR, 'ner/static'),
-                    os.path.join(BASE_DIR, 'relation_extraction/static'),
+                    os.path.join(BASE_DIR, 'knowledge_extraction/static'),
                     os.path.join(BASE_DIR, 'database/static'),
                     ]
 
