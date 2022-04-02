@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="format-detection" content="telephone=no, email=no"/>
+
+
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+
+    {% block title %}
+
+    {% endblock %}
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="http://one.ujn.edu.cn/up/resource/css/common/theme-up/theme-orange-black-style-up.css?v=v2_202003">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+
+    {% block js %}
+
+    {% endblock %}
+
+
+    {% block css %}
+    {% endblock %}
+</head>
+
+<body>
+
+{% block body %}
+
+
+
+{% endblock %}
+
+
+</body>
+
+{% block other_js %}
+
+
+{% endblock %}
+
+
+</html>

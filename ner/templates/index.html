@@ -1,0 +1,64 @@
+{% extends 'basic.html' %}
+{% load static %}
+
+{% block title %}
+    <title>欢迎使用LuGeBioNER工具</title>
+{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+{% block js %}
+
+
+{% endblock %}
+
+
+{% block body %}
+
+    <div class="content">
+        <form method="post" class="form-validate" id="loginFrom">
+            {% csrf_token %}
+            <div class="form-group">
+                <input id="raw_text" type="text" name="name" required data-msg="输入文本"
+                       placeholder="文本" class="input-material">
+
+            </div>
+
+            <button id="login" type="button" class="btn btn-primary" onclick="submit_text()">提交</button>
+
+        </form>
+    </div>
+
+
+{% endblock %}
+
+{% block other_js %}
+    <script>
+        // 这是一个ajax的示例
+        submit_text = function () {
+            var raw_text = $("#raw_text").val()
+
+            // 这个方式进行
+            var formData = new FormData()
+            formData.append("csrfmiddlewaretoken", $("[name='csrfmiddlewaretoken']").val());
+            formData.append('raw_text', raw_text)
+
+            $.ajax({
+                url: "{% url 'get_text_classification' %}",
+                type: 'POST', //一定要大写POST,坑我好久
+                mimeType: "multipart/form-data",
+                // 告诉jQuery不要去处理发送的数据, 发送对象。
+                processData: false,
+                data: formData,
+                // 告诉jQuery不要去设置Content-Type请求头
+                contentType: false,
+                success: function (data) {
+
+                }
+            });
+
+        }
+    </script>
+{% endblock %}
