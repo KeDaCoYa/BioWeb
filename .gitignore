@@ -152,6 +152,7 @@ cython_debug/
 .idea/
 
 # 自己需要忽略的文件夹
+src/trained_models
 
 
 
