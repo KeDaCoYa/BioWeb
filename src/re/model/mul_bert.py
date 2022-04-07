@@ -13,15 +13,15 @@
 import torch
 from ipdb import set_trace
 
-from config import BertConfig
-from src.models.bert_model import BaseBert
+
 import torch.nn as nn
 import numpy as np
 
+from src.re.model.bert_model import BaseBert
 
 
 class MulBERT(BaseBert):
-    def __init__(self, config:BertConfig):
+    def __init__(self, config):
         super(MulBERT, self).__init__(config)
 
         self.num_labels = config.num_labels
@@ -88,12 +88,7 @@ class MulBERT(BaseBert):
         logits = score.squeeze(-1)
         # Softmax
 
-        if labels is not None:
 
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-
-            return loss,logits
 
         return logits  # (loss), logits, (hidden_states), (attentions)
 

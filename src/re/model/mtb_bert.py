@@ -16,14 +16,13 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-from torch.nn import CrossEntropyLoss,BCELoss
 
-from config import BertConfig
-from src.models.bert_model import BaseBert
+
+from src.re.model.bert_model import BaseBert
 
 
 class MTBRelationClassification(BaseBert):
-    def __init__(self, config:BertConfig):
+    def __init__(self, config):
         super(MTBRelationClassification, self).__init__(config)
         self.num_labels = config.num_labels
         self.config = config
@@ -31,12 +30,6 @@ class MTBRelationClassification(BaseBert):
         self.dropout = nn.Dropout(config.dropout_prob)
 
 
-        self.criterion = CrossEntropyLoss(reduction='none')
-        # 初始化部分网络参数
-        # nn.init.xavier_normal_(self.test1_entity.weight)
-        # nn.init.constant_(self.test1_entity.bias, 0.)
-        # nn.init.xavier_normal_(self.test2_entity.weight)
-        # nn.init.constant_(self.test2_entity.bias, 0.)
         self.scheme = config.scheme
         if self.scheme == 1:
             self.classifier_dim = self.bert_config.hidden_size * 3
@@ -88,9 +81,6 @@ class MTBRelationClassification(BaseBert):
         logits = self.classifier(pooled_output)
 
 
-        if labels is not None:
-            loss = self.criterion(logits.view(-1, self.num_labels), labels.view(-1))
-            return loss,logits
 
         return logits
 

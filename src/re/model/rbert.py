@@ -13,9 +13,11 @@
 import torch
 from ipdb import set_trace
 
-from config import BertConfig
-from src.models.bert_model import BaseBert
+
 import torch.nn as nn
+
+from src.re.model.bert_model import BaseBert
+
 
 class FCLayer(nn.Module):
     def __init__(self, input_dim, output_dim, dropout_rate=0.0, use_activation=True):
@@ -33,7 +35,7 @@ class FCLayer(nn.Module):
 
 
 class RBERT(BaseBert):
-    def __init__(self, config:BertConfig):
+    def __init__(self, config):
         super(RBERT, self).__init__(config)
 
         self.num_labels = config.num_labels
@@ -41,32 +43,17 @@ class RBERT(BaseBert):
         # 下面这两个dim可以进行修改
         self.cls_dim = self.bert_config.hidden_size
         self.entity_dim = self.bert_config.hidden_size
-        # 这是对cls的线性变换...
-        # (cls_fc_layer): FCLayer(
-        #     (dropout): Dropout(p=0.1, inplace=False)
-        # (linear): Linear(in_features=768, out_features=768, bias=True)
-        # (tanh): Tanh()
-        # )
+
         self.cls_fc_layer = FCLayer(self.bert_config.hidden_size, self.cls_dim,self.config.dropout_prob)
-        #   (entity_fc_layer): FCLayer(
-        #     (dropout): Dropout(p=0.1, inplace=False)
-        #     (linear): Linear(in_features=768, out_features=768, bias=True)
-        #     (tanh): Tanh()
-        #   )
+
         self.entity_fc_layer = FCLayer(self.bert_config.hidden_size, self.entity_dim, self.config.dropout_prob)
-        # (label_classifier): FCLayer(
-        #     (dropout): Dropout(p=0.1, inplace=False)
-        #     (linear): Linear(in_features=2304, out_features=19, bias=True)
-        #     (tanh): Tanh()
-        #   )
+
         self.label_classifier = FCLayer(
             self.cls_dim+self.entity_dim*2,
             self.config.num_labels,
             self.config.dropout_prob,
             use_activation=False,
         )
-        if self.config.freeze_bert:
-            self.freeze_parameter(config.freeze_layers)
 
         # 模型层数的初始化初始化
         nn.init.xavier_normal_(self.cls_fc_layer.linear.weight)
@@ -138,18 +125,6 @@ class RBERT(BaseBert):
         concat_h = torch.cat([pooled_output, e1_h, e2_h], dim=-1)#torch.Size([16, 2304])
         logits = self.label_classifier(concat_h)
 
-
-
-        # Softmax
-        if labels is not None:
-            if self.num_labels == 1:
-                loss_fct = nn.MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
-            else:
-                loss_fct = nn.CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-
-            return loss,logits
 
         return logits  # (loss), logits, (hidden_states), (attentions)
 

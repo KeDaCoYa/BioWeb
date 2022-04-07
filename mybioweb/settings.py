@@ -27,9 +27,6 @@ SECRET_KEY = 'django-insecure-4c9nct_)=#lmmcxue2lusk!gacl2pn3260*u+x^=ke3$-vf3!%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -83,10 +80,21 @@ WSGI_APPLICATION = 'mybioweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR+'/db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR+'/db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'bioweb',
+        'USER': 'kedaxia',
+        'PASSWORD': 'kedaxia',
+        'HOST': '10.10.64.190',
+        'PORT': '3306'
     }
 }
 
@@ -139,3 +147,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 允许远程访问
+ALLOWED_HOSTS=["*"]
+
+
+# 数据库设置

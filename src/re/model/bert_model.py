@@ -21,8 +21,6 @@ import torch.nn as nn
 from transformers import BertModel
 import logging
 
-from src.models.KeBioLM_model import KebioModel, KebioForRelationExtraction
-
 logger = logging.getLogger('main.bert_model')
 
 
@@ -39,52 +37,12 @@ class BaseBert(nn.Module):
         self.config = config
         if config.bert_name == 'kebiolm':
 
-            self.bert_model = KebioForRelationExtraction(config)
-            self.bert_model.bert = KebioModel.from_pretrained(config.bert_dir, config=config)
-            #self.bert_model = KebioModel.from_pretrained(config.bert_dir, config=config)
+            pass
         else:
-            self.bert_model = BertModel.from_pretrained(config.bert_dir, output_hidden_states=True,
-                                                        hidden_dropout_prob=config.dropout_prob)
+
+            self.bert_model = BertModel.from_pretrained(config.bert_dir, output_hidden_states=True,hidden_dropout_prob=config.dropout_prob)
 
         self.bert_config = self.bert_model.config
-        if config.freeze_bert:
-            self.freeze_parameter(config.freeze_layers)
-
-    @staticmethod
-    def _init_weights(blocks, **kwargs):
-        """
-        对指定的blocks进行参数初始化,只对指定layer进行初始化
-        主要是对BERT之后的一些layer进行初始化
-        :param blocks:
-        :param kwargs:
-        :return:
-        """
-        for block in blocks:
-            for module in block.modules():  # 就是获取Sequential的里面的每一个layer
-                if isinstance(module, nn.Linear):  # 只对全连接层进行初始化
-                    if module.bias is not None:
-                        nn.init.zeros_(module.bias)
-                    elif isinstance(module, nn.Embedding):
-                        nn.init.normal_(module.weight, mean=0, std=kwargs.pop('initializer_range', 0.02))
-                    elif isinstance(module, nn.LayerNorm):  # 这个没看懂为什么这样子进行初始化,全初始化为1和0
-                        nn.init.ones_(module.weight)
-                        nn.init.zeros_(module.bias)
-
-    def freeze_parameter(self, freeze_layers):
-        '''
-        对指定的layers进行冻结参数
-        :param layers: 格式为['layer.10','layer.11','bert.pooler','out.']
-        :return:
-        '''
-        for name, param in self.bert_model.named_parameters():
-
-            for ele in freeze_layers:
-                if ele in name:
-                    param.requires_grad = False
-        # 验证一下实际情况
-        # for name,param in self.bert_model.named_parameters():
-        #     if param.requires_grad:
-        #         print(name,param.size())
 
     @staticmethod
     def special_tag_representation(seq_output, input_ids, special_tag):

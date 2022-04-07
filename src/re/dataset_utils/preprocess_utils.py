@@ -18,7 +18,6 @@ from ipdb import set_trace
 
 import numpy as np
 
-from gensim.models import Word2Vec,FastText
 
 
 class InputExamples(object):
@@ -64,46 +63,6 @@ class MTBExamples(object):
         self.ent2_id = ent2_id
         self.abstract_id = abstract_id
 
-def load_pretrained_fasttext(fastText_embedding_path):
-    '''
-    加载预训练的fastText
-    :param fastText_embedding_path:
-    :return:fasttext,word2id,id2word
-    '''
-    fasttext = FastText.load(fastText_embedding_path)
-
-    id2word = {i + 1: j for i, j in enumerate(fasttext.wv.index2word)}  # 共1056283个单词，也就是这些embedding
-    word2id = {j: i for i, j in id2word.items()}
-    fasttext = fasttext.wv.syn0
-    word_hidden_dim = fasttext.shape[1]
-    # 这是为了unk
-    fasttext = np.concatenate([np.zeros((1, word_hidden_dim)),np.zeros((1, word_hidden_dim)), fasttext])
-    return fasttext,word2id,id2word
-
-
-def load_pretrained_word2vec(word2vec_embedding_path):
-    '''
-    加载预训练的fastText
-    :param word2vec_embedding_path:
-    :return:word2vec, word2id, id2word
-    '''
-    word2vec = Word2Vec.load(word2vec_embedding_path)
-
-    # 空出0和1，0是pad，1是unknow
-    id2word = {i + 2: j for i, j in enumerate(word2vec.wv.index2word)}  # 共1056283个单词，也就是这些embedding
-    word2id = {j: i for i, j in id2word.items()}
-    word2vec = word2vec.wv.syn0
-    word_hidden_dim = word2vec.shape[1]
-    # 这是为了pad和unk
-    word2id['unk'] = 1
-    word2id['pad'] = 0
-    id2word[0] = 'pad'
-    id2word[1] = 'unk'
-    word2vec = np.concatenate([np.zeros((1, word_hidden_dim)),np.zeros((1, word_hidden_dim)), word2vec])
-
-   # word2vec = np.concatenate([[copy.deepcopy(word2vec[0])], word2vec])
-
-    return word2vec, word2id, id2word
 
 def get_relative_pos_feature(x,limit):
      """
@@ -134,32 +93,6 @@ def get_label2id(label_file):
 
     return label2id,id2label
 
-def read_semeval2010(sentences_file,labels_file):
-    '''
-        关系分类任务，一般是读取两个文件，sentence.txt labels.txt
-        这里就是读取数据
-        :param file_path:
-        :return:
-            sents:列表，每一个为元组(start_idx,end_idx,entity_name)
-            labels:对应的关系类别
-        '''
-    sents = list()
-    # Replace each token by its index if it is in vocab, else use index of unk_word
-    with open(sentences_file, 'r') as f:
-        for i, line in enumerate(f):
-            # 这里分离出实体对和句子
-            e1, e2, sent = line.strip().split('\t')
-            words = sent.split(' ')  # 将句子划分为一个一个单词
-            sents.append((e1, e2, words))
-
-    # Replace each label by its index
-    f = open(labels_file, 'r')
-    labels = f.readlines()
-    f.close()
-    labels = [label.strip() for label in labels]
-
-    return sents, labels
-
 
 def read_file(file_path):
     f = open(file_path, 'r', encoding='utf-8')
@@ -184,86 +117,21 @@ def read_raw_data(config):
        raise ValueError("data_format错误")
     return examples
 
-def read_data(config,type='train'):
-    '''
-    这里根据不同的数据集，需要读取不同格式的数据集，但是最后输出会保持一致，一个是sentence，另一个是label
-    :param config:
-    :param type:
-    :return:
-    '''
-    if config.dataset_name == 'semeval2010':
-        if type == 'train':
-            return read_semeval2010(config.train_file_path,config.train_labels_path)
-        else:
-            return read_semeval2010(config.dev_file_path, config.dev_labels_path)
-    else:
-        if config.data_format == 'normal': #格式为<CLS>sentence a<sep>sentence b <sep>
-            if type == 'train':
-                examples = process_normal_data(config.train_normal_path, config.dataset_name)
-            else:
-                examples = process_normal_data(config.dev_normal_path, config.dataset_name)
-        elif config.data_format == 'mtb':
-            if type == 'train':
-                examples = process_mtb_data(config.train_mtb_path, config.dataset_name)
-            else:
-                examples = process_mtb_data(config.dev_mtb_path, config.dataset_name)
-        else:
-           raise ValueError("data_format错误")
-        return examples
-
-def process_mtb_data(file_path,dataset_name):
-    '''
-
-    :param file_path:
-    :return:
-    '''
-    f = open(file_path, 'r', encoding='utf-8')
-    lines = f.readlines()
-    f.close()
+def transform_mtb_data(dataset):
     res = []
+    for idx, line in enumerate(dataset[1:]):
+        abstract_id, sent1, sent2, ent1_name, ent2_name, ent1_type, ent2_type, ent1_id, ent2_id, distance = line
+        example = MTBExamples(sent1, sent2, None, ent1_type, ent2_type, ent1_name, ent2_name, ent1_id, ent2_id)
+        res.append(example)
+    return res
+def transform_normal_data(dataset):
+    res = []
+    for idx, line in enumerate(dataset[1:]):
 
-    if dataset_name in ['DDI2013','LLL','HPRD-50','IEPA','AIMed']: # 针对二分类数据
-        for idx,line in enumerate(lines):
-
-            line = line.strip()
-            line = line.split('\t')
-
-            sent1,sent2, ent1_name, ent2_name, ent1_type, ent2_type, label = line
-            example = MTBExamples(sent1,sent2, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    elif dataset_name in ['BC6ChemProt','BC7DrugProt']:
-        for idx, line in enumerate(lines[1:]):
-
-            line = line.strip() #去除换行符
-            line = line.split('\t')
-            if dataset_name == 'BC6ChemProt':
-                sent1,sent2,ent1_type, ent2_type,ent1_name, ent2_name,label,_,_,_ = line
-            elif dataset_name == 'BC7DrugProt':
-                sent1, sent2, ent1_type, ent2_type, ent1_name, ent2_name, label, _, _ = line
-            else:
-                raise ValueError
-            example = MTBExamples(sent1,sent2, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    elif dataset_name in ['BC5CDR','two_BC6','two_BC7']:
-        for idx, line in enumerate(lines):
-
-            line = line.strip()  # 去除换行符
-            line = line.split('\t')
-            sent1, sent2, ent1_type, ent2_type, ent1_name, ent2_name, label, _ = line
-            example = MTBExamples(sent1, sent2, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    elif dataset_name == 'AllDataset':
-        for idx, line in enumerate(lines[1:]):
-
-            line = line[:-1]  # 去除换行符
-            line = line.split('\t')
-
-            sent1, sent2, ent1_name, ent2_name,ent1_type, ent2_type,  label, _ = line
-
-            example = MTBExamples(sent1, sent2, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    else:
-        raise ValueError("选择正确的数据集名称")
+        abstract_id, sent, ent1_name, ent2_name, ent1_type, ent2_type, ent1_id, ent2_id, distance = line
+        example = InputExamples(sent, None, ent1_type, ent2_type, ent1_name, ent2_name, ent1_id, ent2_id,
+                                abstract_id=abstract_id)
+        res.append(example)
     return res
 
 def process_raw_mtb_data(file_path):
@@ -297,68 +165,6 @@ def process_raw_normal_data(file_path):
         abstract_id ,sent, ent1_name, ent2_name, ent1_type, ent2_type,ent1_id,ent2_id, distance = line
         example = InputExamples(sent, None, ent1_type, ent2_type, ent1_name, ent2_name,ent1_id,ent2_id,abstract_id=abstract_id)
         res.append(example)
-    return res
-
-def process_normal_data(file_path,dataset_name):
-    """
-    这是处理标准数据集，数据格式为normal格式
-    :param file_path:
-    :return:
-    """
-    f = open(file_path, 'r', encoding='utf-8')
-    lines = f.readlines()
-    f.close()
-    res = []
-    if dataset_name in ['2018n2c2_track2']:
-        for line in lines:
-            line = line.strip()
-            rel_type,text_a,text_b,ent1_type,ent2_type,ent1_id,ent_id,_ = line.split('\t')
-            example = MTBExamples(text_a,text_b,rel_type,ent1_type,ent2_type)
-            res.append(example)
-    elif dataset_name in ['euadr','GAD','DDI2013','LLL','HPRD-50','IEPA','AIMed']: # 针对二分类数据
-        for idx,line in enumerate(lines):
-
-            line = line.strip()
-            line = line.split('\t')
-            if dataset_name in ['euadr','GAD']:
-                line = line[1:]
-
-            sent, ent1_name, ent2_name, ent1_type, ent2_type,label = line
-
-            example = InputExamples(sent,label,ent1_type,ent2_type,ent1_name,ent2_name)
-            res.append(example)
-    elif dataset_name in ['BC6ChemProt','BC7DrugProt']:
-        for idx, line in enumerate(lines[1:]):
-
-            line = line.strip()
-            line = line.split('\t')
-
-            if dataset_name == 'BC6ChemProt':
-                sent,ent1_type, ent2_type,ent1_name, ent2_name,label,_,_,_ = line
-            else:
-                sent,ent1_type, ent2_type,ent1_name, ent2_name,label,_,_ = line
-
-            example = InputExamples(sent, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    elif dataset_name in ['BC5CDR','two_BC6','two_BC7']:
-        for idx, line in enumerate(lines):
-            line = line.strip()
-            line = line.split('\t')
-            sent,ent1_type, ent2_type,ent1_name, ent2_name, label,_ = line
-            example = InputExamples(sent, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-    elif dataset_name == 'AllDataset':
-        for idx, line in enumerate(lines[1:]):
-
-            line = line.strip()
-            line = line.split('\t')
-            sent,ent1_name, ent2_name,ent1_type, ent2_type,label,_ = line
-            example = InputExamples(sent, label, ent1_type, ent2_type, ent1_name, ent2_name)
-            res.append(example)
-
-
-    else:
-        raise ValueError("选择正确的数据集名称")
     return res
 
 
@@ -406,10 +212,3 @@ def sequence_padding(inputs,length=None,value=0,seq_dims=1,mode='post'):
         outputs.append(x)
 
     return np.array(outputs)
-
-if  __name__ == '__main__':
-    sentences_file = './general_domain_dataset/semeval2008/mid_dataset/train/sentences.txt'
-    labels_file = './general_domain_dataset/semeval2008/mid_dataset/train/labels.txt'
-    sents,labels = read_data(sentences_file,labels_file)
-    label2id,id2label = get_label2id('./general_domain_dataset/semeval2008/mid_dataset/labels.txt')
-

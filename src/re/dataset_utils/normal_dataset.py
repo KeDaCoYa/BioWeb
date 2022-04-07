@@ -19,15 +19,12 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-
-
-from config import BertConfig
-from src.utils.function_utils import get_pos_feature
-from src.dataset_utils.data_process_utils import sequence_padding, InputExamples
+from src.re.dataset_utils.preprocess_utils import sequence_padding
 
 logger = logging.getLogger('main.entity_type_marker')
+
 class NormalDataset(Dataset):
-    def __init__(self, examples,config: BertConfig, tokenizer, label2id,device):
+    def __init__(self, examples,config, tokenizer, label2id,device):
         super(NormalDataset, self).__init__()
         self.config = config
         self.examples = examples

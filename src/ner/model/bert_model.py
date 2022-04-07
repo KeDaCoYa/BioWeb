@@ -19,12 +19,7 @@ import torch
 import torch.nn as nn
 from transformers import BertModel
 
-
-
-from config import MyBertConfig
-from src.models.KeBioLM_model import KebioModel
-from src.pretrained_models.flash import FLASHQuadForMaskedLM
-from src.pretrained_models.wwm_bert import WWWMBertForPreTraining
+from src.ner.config import MyBertConfig
 
 logger = logging.getLogger('main.bert_model')
 
@@ -40,30 +35,9 @@ class BaseBert(nn.Module):
         if config.bert_name in ['biobert','scibert']:
             self.bert_model = BertModel.from_pretrained(config.bert_dir,output_hidden_states=True,hidden_dropout_prob=config.dropout_prob)
 
-        elif config.bert_name == 'kebiolm':
-            self.bert_model = KebioModel.from_pretrained(config.bert_dir, config=config)
-        elif config.bert_name == 'flash_quad':
-
-            self.set_flash_quad_config(config)
-
-            model = FLASHQuadForMaskedLM(config)
-            checkpoint = torch.load(os.path.join(config.bert_dir, 'model.pt'))
-            model.load_state_dict(checkpoint)
-            self.bert_model = model.flash_quad
-
-        elif config.bert_name == 'wwm_bert':
-
-            self.set_wwm_bert_config(config)
-            model = WWWMBertForPreTraining(config)
-
-            checkpoint = torch.load(os.path.join(config.bert_dir,'model.pt'))
-            model.load_state_dict(checkpoint)
-            self.bert_model = model.bert
 
         self.bert_config = self.bert_model.config
 
-        if config.freeze_bert:
-            self.freeze_parameter(config.freeze_layers)
 
 
     @staticmethod

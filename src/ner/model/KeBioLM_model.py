@@ -14,7 +14,6 @@ import torch
 import numpy as np
 from ipdb import set_trace
 
-from config import KebioConfig
 from torch.nn.utils.rnn import pad_sequence
 from transformers import BertPreTrainedModel,PretrainedConfig
 from dataclasses import dataclass
@@ -24,6 +23,9 @@ from transformers.modeling_bert import (
     BaseModelOutput,
     ModelOutput,
 )
+
+from src.ner.config import KebioConfig
+
 
 class KebioModel(BertPreTrainedModel):
     def __init__(self, config: KebioConfig):

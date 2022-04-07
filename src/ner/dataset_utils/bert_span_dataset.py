@@ -19,8 +19,8 @@ import torch
 from torch.utils.data import Dataset
 import logging
 
-from config import BertConfig
-from src.dataset_util.base_dataset import sequence_padding, tokenize_text, tokenize_text_predicate
+from src.ner.config import MyBertConfig
+from src.ner.dataset_utils.base_dataset import sequence_padding, tokenize_text, tokenize_text_predicate
 
 logger = logging.getLogger('main.span_dataset')
 
@@ -56,7 +56,7 @@ class BertSpanDataset(Dataset):
 
 
 class BertSpanDataset_dynamic(Dataset):
-    def __init__(self, config: BertConfig, data, tokenizer, is_train=True):
+    def __init__(self, config: MyBertConfig, data, tokenizer, is_train=True):
         '''
 
         :param data:

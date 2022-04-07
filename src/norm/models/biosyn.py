@@ -31,7 +31,7 @@ import torch.nn.functional as F
 
 from transformers import AutoModel, AutoTokenizer, default_data_collator
 
-from src.data_loader import NamesDataset
+from src.norm.utils.data_loader import NamesDataset
 
 logger = logging.getLogger('main.sparse_encoder')
 

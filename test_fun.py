@@ -11,4 +11,5 @@
 """
 def hello_():
     print("hello word")
-
+def hi_():
+    print("Hi")
