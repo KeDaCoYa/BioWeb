@@ -1,10 +1,8 @@
 from django.urls import path
-
-
 from . import views
 
-urlpatterns = [
-    path('',views.index,name='index'),
-    path('get_text_classification',views.get_text_classification,name='get_text_classification'),
+app_name = 'knowledge_extraction'
 
+urlpatterns = [
+    path('', views.index, name='index'),
 ]
