@@ -1,3 +1,7 @@
-from django.shortcuts import render
+import json
 
-# Create your views here.
+from django.shortcuts import render
+from django.http import HttpResponse
+
+def data(request):
+    return render(request, "data.html")
