@@ -101,9 +101,10 @@ def generate_entity_pairs(entities):
             continue
         ent1_type = ent1['entity_type']
         ent2_type = ent2['entity_type']
-        if (ent1_type, ent2_type) in [('Gene/Protein', 'Gene/Protein'), ('Gene/Protein', 'Chemical/Drug'),
-                                      ("Chemical/Drug", "Gene/Protein"), ("Chemical/Drug", "Chemical/Drug"),
-                                      ("Gene/Protein", "Disease"), ("Disease", "Gene/Protein")]:
+        if (ent1_type, ent2_type) in [('Gene/Protein','Gene/Protein'),('Gene/Protein','Chemical/Drug'),
+                                      ("Chemical/Drug","Gene/Protein"),("Chemical/Drug","Chemical/Drug"),("Gene/Protein","Disease"),
+                                      ("Disease","Gene/Protein"),("Chemical/Drug","Disease"),
+                                      ("Disease","Chemical/Drug"),('DNA','Gene/Protein'),('Gene/Protein','DNA')]:
             new_li.append((ent1, ent2))
 
     return new_li

@@ -30,7 +30,7 @@ def get_norm_bert_config():
         bert_name='biobert',
         use_gpu=True if torch.cuda.is_available() else False,
         max_len=25,
-        batch_size=1,
+        batch_size=32,
         seed=1234,
         gpu_id=0,
         logfile_name='log',

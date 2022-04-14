@@ -115,6 +115,7 @@ class MyReModel:
 
                         elif self.config.num_labels == 2:
 
+
                             relation_predicate_res.append({
                                 'id': 'r' + str(step * self.config.batch_size + idx),
                                 'abstract_id': examples[step * self.config.batch_size + idx].abstract_id,

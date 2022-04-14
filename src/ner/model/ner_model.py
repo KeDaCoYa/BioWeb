@@ -15,6 +15,7 @@ from copy import deepcopy
 from itertools import combinations
 
 import torch
+from ipdb import set_trace
 from tqdm import tqdm
 
 from src.ner.ner_predicate import init_ner_model
@@ -40,6 +41,7 @@ class MyNERModel:
         with torch.no_grad():
             for step, batch_data in enumerate(dev_loader):
                 entities = []
+
                 if self.config.which_model == 'bert':
 
                     if self.config.model_name == 'bert_span':

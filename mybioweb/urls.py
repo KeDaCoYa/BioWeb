@@ -18,6 +18,7 @@ from django.urls import path,include
 
 urlpatterns = [
     path('knowledge_extraction/',include('knowledge_extraction.urls')),
+    path('index/',include('database.urls')),
     path('admin/', admin.site.urls),
 
 ]

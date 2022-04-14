@@ -6,18 +6,18 @@ from collections import defaultdict
 from ipdb import set_trace
 from nltk import sent_tokenize, wordpunct_tokenize
 
-
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views import View
-
+from django.views.decorators.csrf import csrf_exempt
 
 from src.function_utils import get_logger
 from src.ner.model.ner_model import MyNERModel
 from src.ner.ner_predicate import get_ner_bert_config
 from src.ner.utils.preprocess_utils import get_text_data_from_pubmed, generate_re_normal
 from knowledge_extraction.models import PmidAnnotate
-from knowledge_extraction.utils import get_text_classification_url, transform_entity_idx, correct_datetime
+from knowledge_extraction.utils import get_text_classification_url, transform_entity_idx, correct_datetime, \
+    transform_triplets_info
 from src.norm.models.normalize_model import MyNormModel
 from src.norm.norm_predicate import get_norm_bert_config, init_norm_model
 from src.re.dataset_utils.preprocess_utils import process_raw_normal_data
@@ -26,24 +26,24 @@ from src.re.re_predicate import get_re_bert_config, init_re_model
 
 logger = get_logger()
 
+
 class Test(View):
     logger.info("这是其他的view初始化")
-    def get(self,request,*args,**kwargs):
+
+    def get(self, request, *args, **kwargs):
         self.hello_()
         print(request.GET)
         return HttpResponse("get_Test")
-
 
     def hello_(self):
         print("Hello_world")
 
 
 class KnowledgeExtraction(View):
-
     ner_ckpt_path = "./src/trained_models/ner/bert_span.pt"
     logger.info("加载NER模型....")
     config = get_ner_bert_config()
-    model = MyNERModel(ner_ckpt_path,config)
+    model = MyNERModel(ner_ckpt_path, config)
     logger.info("!!加载NER模型完成!!")
 
     logger.info("开始加载RE模型....")
@@ -58,21 +58,28 @@ class KnowledgeExtraction(View):
     norm_model = MyNormModel(nrom_ckpt_path, config)
     logger.info("!!加载Norm模型完成!!")
 
-    def get(self,request,*args,**kwargs):
-        print(request.GET)
+    def get(self, request, *args, **kwargs):
+        return HttpResponse("can not access")
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST)
+        start = time.time()
         outputs = {}
         all_triplets = None
-        if request.GET['req_type'] == 'pmid':
-            pmid = request.GET['pmid']
-            start = time.time()
+        if request.POST['req_type'] == 'pmid':
+            pmid = request.POST['sample_text']
+
             query = PmidAnnotate.objects.filter(pmid=pmid)
-            logger.info("数据库查询花费时间:{:.3f}".format(time.time()-start))
+            logger.info("数据库查询花费时间:{:.3f}".format(time.time() - start))
             if len(query) == 1:
                 obj = query[0]
+                outputs['cost_time'] = "{:.3f}".format(time.time() - start)
                 outputs['entities'] = eval(obj.entities)
                 outputs['triplets'] = eval(obj.relations)
+                outputs['source'] = 'from_database'
                 logger.info("数据库中有此文章，直接查询返回")
-                return HttpResponse(json.dumps(outputs, ensure_ascii=False),
+
+                return HttpResponse(json.dumps(outputs,ensure_ascii=False),
                                     content_type="application/json;charset=utf-8")
 
             # 首先到数据库进行查询
@@ -80,38 +87,35 @@ class KnowledgeExtraction(View):
             abstract_text = get_text_data_from_pubmed(pmid)
         else:
             pmid = ""
-            abstract_text = request.GET['sample_text']
+            abstract_text = request.POST['sample_text']
 
         sents = sent_tokenize(abstract_text)
         sent_li = []
         for sent in sents:
             sent_li.append(wordpunct_tokenize(sent))
 
-        if request.GET['task_type'] == 'entity_extraction':
-
+        if request.POST['task_type'] == 'entity_extraction':
             start = time.time()
             entities = self.entity_extraction(abstract_text)
             print("实体抽取花费时间:{}s".format(time.time() - start))
 
+        elif request.POST['task_type'] == 'entity_extraction,entity_normalization':
 
-        elif request.GET['task_type'] == 'entity_extraction,entity_normalization':
 
-            start1 = time.time()
             entities = self.entity_extraction(abstract_text)
-            print("实体抽取花费时间:{}s".format(time.time() - start1))
+            print("实体抽取花费时间:{}s".format(time.time() - start))
             start2 = time.time()
             entities = self.entity_normalization(entities)
             print("实体标准化花费时间:{}s".format(time.time() - start2))
-            print("最终花费时间:{}s".format(time.time() - start1))
+            print("最终花费时间:{}s".format(time.time() - start))
 
 
 
-        elif request.GET['task_type'] == 'entity_extraction,entity_normalization,relation_extraction':
+        elif request.POST['task_type'] == 'entity_extraction,entity_normalization,relation_extraction':
 
-            start1 = time.time()
             entities = self.entity_extraction(abstract_text)
             self.reprots(entities)
-            print("实体抽取花费时间:{}s".format(time.time() - start1))
+            print("实体抽取花费时间:{}s".format(time.time() - start))
 
             start2 = time.time()
             entities = self.entity_normalization(entities)
@@ -120,18 +124,20 @@ class KnowledgeExtraction(View):
             start3 = time.time()
             all_dataset = generate_re_normal(pmid, sent_li, entities)
             all_triplets = self.relation_extraction(all_dataset)
-            logger.info("生成数据个数:{}的最终三元组个数:{}".format(len(all_dataset),len(all_triplets)))
+            all_triplets = transform_triplets_info(entities,all_triplets)
+            logger.info("生成数据个数:{}的最终三元组个数:{}".format(len(all_dataset), len(all_triplets)))
             print("关系抽取花费时间:{}s".format(time.time() - start3))
-            print("全部花费时间:{}s".format(time.time() - start1))
+            print("全部花费时间:{}s".format(time.time() - start))
             outputs['triplets'] = all_triplets
 
         else:
             raise ValueError("没有此选项")
 
         abstract_text, entities_li = transform_entity_idx(sent_li, entities)
-        if request.GET['req_type'] == 'pmid':
+        if request.POST['req_type'] == 'pmid':
             now_ = correct_datetime()
-            new_obj = PmidAnnotate(pmid=pmid,entities=str(entities),relations=str(all_triplets),update_time=now_,abstract_text=abstract_text)
+            new_obj = PmidAnnotate(pmid=pmid, entities=str(entities), relations=str(all_triplets), update_time=now_,
+                                   abstract_text=abstract_text)
             new_obj.save()
             logger.info("保存PMID:{}到MySQL成功".format(pmid))
         # 转变entites为字典形式存贮，entity id为key
@@ -140,18 +146,23 @@ class KnowledgeExtraction(View):
             entities_dict[ent['id']] = ent
         if "triplets" in outputs:
             for triple in all_triplets:
-                e1_id = triple['e1_id']
-                e2_id = triple['e2_id']
-                print("三员组:{}:{}-{}:{}".format(entities_dict[e1_id]['entity_name'],entities_dict[e1_id]['entity_type'],entities_dict[e2_id]['entity_name'],entities_dict[e2_id]['entity_type']))
+                e1_name = triple['ent1_name']
+                e1_type = triple['ent1_name']
+                e2_name = triple['ent2_name']
+                e2_type = triple['ent2_name']
+                rel_type = triple['rel_type']
+                print("三元组:{}({})-[{}]-{}({})".format(e1_name,e1_type,rel_type,e2_name,e2_type))
 
         outputs['entities'] = entities
+        outputs['cost_time'] = "{:.3f}".format(time.time() - start)
         outputs['abstract_text'] = abstract_text
+        outputs['source'] = 'knowledge_extraction'
         # for ent in entities:
         #     print(ent)
         return HttpResponse(json.dumps(outputs, ensure_ascii=False), content_type="application/json;charset=utf-8")
-    def post(self,request,*args,**kwargs):
-        pass
-    def reprots(self,entities):
+
+
+    def reprots(self, entities):
         """
         对这次抽取的entities进行统计
         """
@@ -161,25 +172,30 @@ class KnowledgeExtraction(View):
         for ent in entities:
             counter[ent['entity_type']] += 1
         logger.info(counter)
-    def entity_extraction(self,abstract_text):
+
+    def entity_extraction(self, abstract_text):
 
         entities = self.model.entity_extraction(abstract_text)
 
         return entities
 
-    def entity_normalization(self,entities):
+    def entity_normalization(self, entities):
 
-        new_entities = self.norm_model.entity_normalization(entities)
+
+        new_entities = self.norm_model.batch_entity_normalization(entities)
+
         return new_entities
-    def relation_extraction(self,all_dataset):
+
+    def relation_extraction(self, all_dataset):
         """
         :param all_dataset:这个就是关系分类的数据格式类被
         """
-        #all_dataset = process_raw_normal_data("./src/re/normal.txt")
+        # all_dataset = process_raw_normal_data("./src/re/normal.txt")
         all_triplets = self.re_model.relation_extraction(all_dataset)
         for triple in all_triplets:
             print(triple)
         return all_triplets
+
 
 #
 # class EntityNormalization(View):
@@ -247,15 +263,20 @@ class KnowledgeExtraction(View):
 
 
 def index(request):
-    return render(request,"index.html")
+    return render(request, "index.html")
 
 
 def entity_extraction(request):
     return HttpResponse("good")
+
+
 def relation_extraction(request):
     return HttpResponse("这是get的relation_extraction")
+
+
 def entity_normalization(request):
     return HttpResponse("这是get的entity_normalization")
+
 
 def get_text_classification(request):
     '''
@@ -263,7 +284,7 @@ def get_text_classification(request):
     '''
     print(request.POST)
     print('----------------------')
-    raw_text =  request.POST['raw_text'][0]
+    raw_text = request.POST['raw_text'][0]
 
     res = get_text_classification_url(text=raw_text)
 
@@ -273,6 +294,3 @@ def get_text_classification(request):
     data['res'] = res
     # 以Ajax的形式返回
     return HttpResponse(json.dumps(data, ensure_ascii=False), content_type="application/json;charset=utf-8")
-
-
-

@@ -43,7 +43,10 @@
             // 这个方式进行
             var formData = new FormData()
             formData.append("csrfmiddlewaretoken", $("[name='csrfmiddlewaretoken']").val());
-            formData.append('raw_text', raw_text)
+
+            formData.append('draw_keys',["disease","mutation","gene","drug","species","DNA","RNA","cell_line","cell_type"])
+            formData.append('sample_text', sample_text)
+            formData.append('req_type', req_type)
 
             $.ajax({
                 url: "{% url 'get_text_classification' %}",

@@ -24,6 +24,26 @@ from transformers import AutoTokenizer, BertForPreTraining
 
 logger = logging.getLogger('main.dataset_utils')
 
+def return_dictionary_url(norm_id,entity_type):
+    if entity_type in ['Gene/Protein','DNA','RNA']:
+        url_pattern = "https://www.ncbi.nlm.nih.gov/gene/{}"
+        _,id_ = norm_id.split(':')
+        url = url_pattern.format(id_)
+        return url
+    elif entity_type == 'Disease':
+        url = "https://meshb-prev.nlm.nih.gov/record/ui?ui={}".format(norm_id)
+    elif entity_type == 'cell_line':
+        url = "https://web.expasy.org/cellosaurus/{}".format(norm_id)
+    elif entity_type == 'cell_type':
+        url = "http://purl.obolibrary.org/obo/{}".format(norm_id)
+    elif entity_type == 'Chemical/Drug':
+        url = "https://meshb-prev.nlm.nih.gov/record/ui?ui={}".format(norm_id)
+    elif entity_type == 'Species':
+        url = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id={}".format(norm_id[:-2])
+    else:
+        raise ValueError("no this entity type:{}".format(entity_type))
+    return url
+
 def choose_model_tokenizer(config):
 
 
