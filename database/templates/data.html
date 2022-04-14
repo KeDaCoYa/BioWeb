@@ -1,0 +1,139 @@
+{% extends 'basic.html' %}
+
+{% load static %}
+
+{% block title %}
+    <title>LuGeBioNER</title>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid" style="padding-left: 15vw;">
+    <div class="row pt-4 px-4">
+        <div class="col-12">
+            <div class="ps-4 pb-3 fs-1">Databse Visulization</div>
+            <hr>
+        </div>
+    </div>
+    <div class="row pt-2 px-4">
+        <div class="col-12 px-4">
+            <ul class="nav navbar navbar-expand px-4 border">
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-list nav-link border-bottom border-1 border-primary text-blue">Nodes</a>
+                </li>
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-list nav-link text-black">Relations</a>
+                </li>
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-list nav-link text-black">Download</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="block_nodes" class="row pt-2 px-4">
+        <div class="ps-4" style="width: 30vw;">
+            <ul class="nav navbar navbar-expand px-4 border">
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-nodes nav-link border-bottom border-1 border-primary text-blue" value="">Variants</a>
+                </li>
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-nodes nav-link text-black">Diseases</a>
+                </li>
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-nodes nav-link text-black">Drugs</a>
+                </li>
+                <li class="nav-item py-2">
+                    <a href="javascript:void(0)" class="nav-nodes nav-link text-black">Genes</a>
+                </li>
+            </ul>
+            <form id="list_variants" method="post" class="list-nodes form-validate border-start border-end border-bottom" style="height: 61vh; overflow-y: auto;">
+                {% csrf_token %}
+                <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
+                <!-- 可复制使用 -->
+                <div class="form-check px-4 py-3 border-bottom">
+                    <input name="variants" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="variants" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is variant!</label>
+                </div>
+            </form>
+            <form id="list_diseases" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+                {% csrf_token %}
+                <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
+                <!-- 可复制使用 -->
+                <div class="form-check px-4 py-3 border-bottom">
+                    <input name="diseases" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="diseases" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is disease!</label>
+                </div>
+            </form>
+            <form id="list_drugs" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+                {% csrf_token %}
+                <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
+                <!-- 可复制使用 -->
+                <div class="form-check px-4 py-3 border-bottom">
+                    <input name="drugs" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="drugs" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is drug!</label>
+                </div>
+            </form>
+            <form id="list_genes" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+                {% csrf_token %}
+                <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
+                <!-- 可复制使用 -->
+                <div class="form-check px-4 py-3 border-bottom">
+                    <input name="genes" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="genes" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is gene!</label>
+                </div>
+            </form>
+        </div>
+        <div class="border" style="width: 51.2vw;">
+            Here is animation!
+        </div>
+    </div>
+    <div id="block_relations" class="row pt-2 px-4 d-none">
+        <div class="ps-4" style="width: 82vw;">
+            <form id="list_relations" method="post" class="form-validate border" style="height: 70.3vh; overflow-y: auto;">
+                {% csrf_token %}
+                <div class="row px-4 py-3 border-bottom">
+                    <div class="col-6"><strong>Link</strong></div>
+                    <div class="col-4"><strong>Relationship</strong></div>
+                    <div class="col-2"><strong>Evidence Level</strong></div>
+                </div>
+                <!-- 可复制使用 -->
+                <div class="row px-4 py-3 border-bottom">
+                    <div class="col-6 form-check">
+                        <input name="relations" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                        <label for="relations" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is relation!</label>
+                    </div>
+                    <div class="col-4">Here is relationship!</div>
+                    <div class="col-2">Here is evidence level!</div>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        $(".nav-list").click(function(){
+            $(".nav-list").removeClass("border-bottom border-1 border-primary");
+            $(".nav-list").addClass("text-black");
+            $(this).removeClass("text-black");
+            $(this).addClass("border-bottom border-1 border-primary text-blue");
+
+            var block_id = "#block_" + $.trim($(this).text().toLowerCase());
+            $("#block_nodes").addClass("d-none");
+            $("#block_relations").addClass("d-none");
+            $(block_id).removeClass("d-none");
+        });
+
+        $(".nav-nodes").click(function(){
+            $(".nav-nodes").removeClass("border-bottom border-1 border-primary");
+            $(".nav-nodes").addClass("text-black");
+            $(this).removeClass("text-black");
+            $(this).addClass("border-bottom border-1 border-primary text-blue");
+
+            var list_nodes_id =  "#list_" + $.trim($(this).text().toLowerCase());
+            $(".list-nodes").addClass("d-none");
+            $(list_nodes_id).removeClass("d-none");
+        });
+    </script>
+{% endblock %}

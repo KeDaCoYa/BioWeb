@@ -1,13 +1,9 @@
 from django.urls import path
-
-
 from . import views
 
-
-
+app_name = 'knowledge_extraction'
 
 urlpatterns = [
-
-    path("knowledge_extraction",views.KnowledgeExtraction.as_view(),name='knowledge_extraction'),
-    path("test2",views.Test.as_view(),name='test2')
+    path('', views.index, name='index'),
+    path('demo', views.demo, name='demo'),
 ]

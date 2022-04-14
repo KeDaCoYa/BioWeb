@@ -1,11 +1,8 @@
 from django.urls import path
-
-
 from . import views
 
-
-
+app_name = 'database'
 
 urlpatterns = [
-    path("",views.show_database,name='show_database')
+    path('', views.data, name='data'),
 ]

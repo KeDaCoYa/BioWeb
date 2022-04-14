@@ -1,67 +1,187 @@
-{% extends 'basic.html' %}
+{% extends "basic.html" %}
+
 {% load static %}
 
 {% block title %}
-    <title>欢迎使用LuGeBioNER工具</title>
+    <title>LuGeBioNER</title>
 {% endblock %}
 
-{% block css %}
-
+{% block body %}
+    <div class="container-fluid" style="padding-left: 15vw;">
+        <div class="row pt-4 px-4">
+            <div class="col-12">
+                <div class="ps-4 pb-3 fs-1">Knowledge Extraction</div>
+                <hr>
+            </div>
+        </div>
+        <div class="row px-4">
+            <div class="col-12">
+                <form id="ke_form" method="post" class="form-validate p-4">
+                    {% csrf_token %}
+                    <div class="form-check px-4 pb-2">
+                        <input id="input_type_text" name="select_input_type" class="form-check-input me-3" type="radio" value="text" checked>
+                        <label for="input_type_text" class="form-check-label">Plain Text</label>
+                    </div>
+                    <div class="form-check px-4 pb-3">
+                        <input id="input_type_pmid" name="select_input_type" class="form-check-input me-3" type="radio" value="pmid">
+                        <label for="input_type_pmid" class="form-check-label">PubMed ID (PMID)</label>
+                    </div>
+                    <div class="form-group pb-3">
+                        <textarea id="input_content" name="input_content" class="form-control" rows="5" required placeholder="Please enter text!"></textarea>
+                    </div>
+                    <div class="pb-3">
+                        <button class="btn btn-primary float-end" type="button" onclick="ke_submit()">Submit</button>
+                    </div>
+                </form>
+                <div id="ke_result" class="pt-4 px-4 position-relative">
+                    <!-- Here is sample of return information from AJAX -->
+                    <div class="ps-4 pb-3 fs-1">Results</div>
+                    <hr>
+                    <div class="row pt-4">
+                        <div class="float-right">
+                            <div class="legend-entity"><div class="span-disease"></div> Disease</div>
+                            <div class="legend-entity"><div class="span-drug"></div> Drug/Chemical</div>
+                            <div class="legend-entity"><div class="span-DNA"></div> DNA</div>
+                            <div class="legend-entity"><div class="span-gene"></div> Gene/Protein</div>
+                            <div class="legend-entity"><div class="span-species"></div> Species</div>
+                            <div class="legend-entity"><div class="span-cell_type"></div> Cell type</div>
+                        </div>
+                    </div>
+                    <div class="row px-4">
+                        <div class="col-9 pt-4">
+                            Autophagy maintains 
+                            <span id="stack_tumour" class="stack-spans span-disease">tumour</span>
+                            here is more information...
+                        </div>
+                        <!-- 可复制使用 -->
+                        <div class="stack-box col-3 mt-4 py-4 border border-3 d-none">
+                            <div id="stack_content_tumour" class="stack_content d-none">
+                                <div><strong>Mention:</strong> tumour</div>
+                                <div><strong>Entity type:</strong> Disease</div>
+                                <div><strong>ID:</strong> mesh:D009369</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block js %}
+    <script type="text/javascript">
+        $(".stack-spans").click(function(){
+            var content_id = "#" + $(this).attr("id").replace("stack", "stack_content");
+            $(".stack-box").removeClass("d-none");
+            $(".stack_content").addClass("d-none");
+            $(content_id).removeClass("d-none");
+        });
 
-
-{% endblock %}
-
-
-{% block body %}
-
-    <div class="content">
-        <form method="post" class="form-validate" id="loginFrom">
-            {% csrf_token %}
-            <div class="form-group">
-                <input id="raw_text" type="text" name="name" required data-msg="输入文本"
-                       placeholder="文本" class="input-material">
-
-            </div>
-
-            <button id="login" type="button" class="btn btn-primary" onclick="submit_text()">提交</button>
-
-        </form>
-    </div>
-
-
-{% endblock %}
-
-{% block other_js %}
-    <script>
-        // 这是一个ajax的示例
-        submit_text = function () {
-            var raw_text = $("#raw_text").val()
-
-            // 这个方式进行
-            var formData = new FormData()
-            formData.append("csrfmiddlewaretoken", $("[name='csrfmiddlewaretoken']").val());
-
-            formData.append('draw_keys',["disease","mutation","gene","drug","species","DNA","RNA","cell_line","cell_type"])
-            formData.append('sample_text', sample_text)
-            formData.append('req_type', req_type)
-
-            $.ajax({
-                url: "{% url 'get_text_classification' %}",
-                type: 'POST', //一定要大写POST,坑我好久
-                mimeType: "multipart/form-data",
-                // 告诉jQuery不要去处理发送的数据, 发送对象。
-                processData: false,
-                data: formData,
-                // 告诉jQuery不要去设置Content-Type请求头
-                contentType: false,
-                success: function (data) {
-
+        ke_submit = function(){
+            var sample_text = $("#input_content").val();
+            var draw_keys = ["disease","mutation","gene","drug","species","DNA","RNA","cell_line","cell_type"];
+            var req = $("[name = 'select_input_type']");
+            var req_type = new String();
+            for(var i = 0; i < req.length; i++){
+                if(req[i].checked){
+                    req_type = req[i].value;
+                    break;
                 }
+            }
+            
+            var form_data = new FormData()
+            //form_data.append("csrfmiddlewaretoken", $("[name='csrfmiddlewaretoken']").val());
+
+            form_data.append("sample_text", sample_text);
+            form_data.append("draw_keys", JSON.stringify(draw_keys));
+            form_data.append("req_type", req_type);
+
+            form_data.append("task_type", 'entity_extraction,entity_normalization,relation_extraction');
+            $.ajax({
+                url: "http://8.133.174.28:8998/knowledge_extraction/knowledge_extraction", //需要更改
+                type: "POST",
+                mimeType: "multipart/form-data",
+                processData: false,
+                data: form_data,
+                crossDomain: true,
+                contentType: false,
+
+                success: function(data){
+                    console.log('-------------')
+                    data = jQuery.parseJSON(data)
+                    console.log(data)
+
+                    $("#ke_result").html(data);
+                },
+                error: function(err) {
+
+                    console.log(err);
+
+                    }
             });
 
-        }
+        };
     </script>
+{% endblock %}
+
+{% block css %}
+<style type="text/css">
+        .legend-entity{
+            position: relative;
+            padding-left: 40px;
+            float: right;
+            height: 30px;
+            line-height: 20px;
+            padding-bottom: 10px;
+        }
+        .legend-entity div{
+            position: absolute;
+            left:16px;
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .stack-spans{
+            display: inline-block;
+            white-space: pre-wrap;
+        }
+        .stack-spans:hover{
+            cursor: pointer;
+        }
+        .span-disease{
+            background-color: rgba(228,26,28, 0.3);
+        }
+        .span-mutation{
+            background-color: rgba(55,126,184, 0.3);
+        }
+
+        .span-drug{
+            background-color: rgba(77,175,74, 0.3);
+        }
+
+        .span-gene{
+            background-color: rgba(152,78,163, 0.3);
+        }
+
+        .span-species{
+        background-color: rgba(255,127,0, 0.3);
+        }
+
+        .span-DNA{
+            background-color: rgba(255,255,51, 0.3);
+        }
+
+        .span-RNA{
+            background-color: rgba(166,86,40, 0.3);
+        }
+
+        .span-cell_line{
+            background-color: rgba(247,129,191, 0.3);
+        }
+
+        .span-cell_type{
+            background-color: rgba(153,153,153, 0.3);
+        }
+    </style> 
 {% endblock %}

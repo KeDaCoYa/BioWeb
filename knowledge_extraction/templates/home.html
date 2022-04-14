@@ -1,0 +1,109 @@
+{% extends 'basic.html' %}
+
+{% load static %}
+
+{% block title %}
+    <title>LuGeBioNER</title>
+{% endblock %}
+
+{% block css %}
+    <style type="text/css">
+        dd{
+            color:dodgerblue;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid" style="padding-left: 15vw;">
+        <div class="row pt-4 px-4">
+            <div class="col-12">
+                <div class="ps-4 pb-3 fs-1">Here is title!</div>
+                <hr>
+            </div>
+        </div>
+        <div class="row pt-2 px-4">
+            <div class="col-8">
+                <span class="ps-4 fs-3">Search Builder</span>
+                <form id="search_form" method="post" class="form-validate p-4">
+                    {% csrf_token %}
+                    <div class="row pb-4">
+                        <div class="form-group col-2">
+                            <select id="search_type" class="form-select" style="width: 10vw;">
+                                <option id="searhc_type_variant">Variant</option>
+                                <option id="searhc_type_disease">Disease</option> 
+                                <option id="searhc_type_drug">Drug</option> 
+                                <option id="searhc_type_gene">Gene</option> 
+                            </select>
+                        </div>
+                        <div class="form-group col-10 px-5">
+                            <input id="search_content" class="form-control" type="text" />
+                        </div>
+                    </div>
+                    <span class="pe-4 pb-3">Traverse Level</span>
+                    <div class="form-check form-check-inline px-4 pb-4">
+                        <input id="traverse_level_1" name="traverse_level" class="form-check-input" type="radio" value="traverse_level_1" checked>
+                        <label for="traverse_level_1" class="form-check-label">1</label>
+                    </div>
+                    <div class="form-check form-check-inline px-4 pb-4">
+                        <input id="traverse_level_2" name="traverse_level" class="form-check-input" type="radio" value="traverse_level_2" checked>
+                        <label for="traverse_level_2" class="form-check-label">2</label>
+                    </div>
+                    <div class="form-check form-check-inline px-4 pb-4">
+                        <input id="traverse_level_3" name="traverse_level" class="form-check-input" type="radio" value="traverse_level_3" checked>
+                        <label for="traverse_level_3" class="form-check-label">3</label>
+                    </div>
+                    <div class="pb-4">
+                        <!-- 需要填写onclick -->
+                        <button class="btn btn-primary float-end" type="button" onclick="">Search</button>
+                    </div>
+                </form>
+                <hr>
+                <span class="ps-4 pb-3 fs-3">Introduction</span>
+                <div class="p-4">Here is introduction!</div>
+                <hr>
+                <span class="ps-4 pb-3 fs-3">Features</span>
+                <div class="p-4">Here is features!</div>
+                <hr>
+                <span class="ps-4 pb-3 fs-3">Architecture</span>
+                <div class="p-4">Here is acchitecture!</div>
+            </div>
+            <div class="col-4 offpt-2 pe-4">
+                <span class="ps-4 fs-3">Browse</span>
+                <dl class="pt-3 ps-4">
+                    <!-- 需要填写onclick -->
+                    <dt class="pb-2 fs-5">Diseases</dt>
+                    <dd>Alzheimer Disease</dd>
+                    <dd>Acute Myeloid Leukemia</dd>
+                    <dd>Colorectal Cancer</dd>
+                    <dd>Cowden Disease</dd>
+                    <dd>Gilbert Syndrome</dd>
+                    <dd>Lung Cancer</dd>
+                    <dd>Osteosarcoma</dd>
+                    <dd>Walker-Warburg Syndrome</dd>
+                </dl>
+                <dl class="pt-3 ps-4">
+                    <dt class="pb-2 fs-5">Genes</dt>
+                </dl>
+                <dl class="pt-3 ps-4">
+                    <dt class="pb-2 fs-5">Variants</dt>
+                </dl>
+                <dl class="pt-3 ps-4">
+                    <dt class="pb-2 fs-5">Drugs</dt>
+                </dl>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        $("dd").mouseenter(function(){
+            $(this).css("color", "red");
+        });
+        
+        $("dd").mouseleave(function(){
+            $(this).css("color", "dodgerblue");
+        });
+    </script>
+{% endblock %}
