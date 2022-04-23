@@ -27,7 +27,9 @@
                         <label for="input_type_pmid" class="form-check-label">PubMed ID (PMID)</label>
                     </div>
                     <div class="form-group pb-3">
-                        <textarea id="input_content" name="input_content" class="form-control" rows="5" required placeholder="Please enter text!"></textarea>
+                        <textarea id="input_content" name="input_content" class="form-control" rows="5" required placeholder="Please enter text!">
+
+                        </textarea>
                     </div>
                     <div class="pb-3">
                         <button class="btn btn-primary float-end" type="button" onclick="ke_submit()">Submit</button>
@@ -39,12 +41,14 @@
                     <hr>
                     <div class="row pt-4">
                         <div class="float-right">
-                            <div class="legend-entity"><div class="span-disease"></div> Disease</div>
-                            <div class="legend-entity"><div class="span-drug"></div> Drug/Chemical</div>
-                            <div class="legend-entity"><div class="span-DNA"></div> DNA</div>
-                            <div class="legend-entity"><div class="span-gene"></div> Gene/Protein</div>
-                            <div class="legend-entity"><div class="span-species"></div> Species</div>
-                            <div class="legend-entity"><div class="span-cell_type"></div> Cell type</div>
+                            <div class="legend-entity"><div class="span-disease"></div>Disease</div>
+                            <div class="legend-entity"><div class="span-gene"></div>Gene/Protein</div>
+                            <div class="legend-entity"><div class="span-drug"></div>Chemical/Drug/</div>
+                            <div class="legend-entity"><div class="span-species"></div>Species</div>
+                            <div class="legend-entity"><div class="span-DNA"></div>DNA</div>
+                            <div class="legend-entity"><div class="span-RNA"></div>RNA</div>
+                            <div class="legend-entity"><div class="span-cell_line"></div>Cell Line</div>
+                            <div class="legend-entity"><div class="span-cell_type"></div>Cell Type</div>
                         </div>
                     </div>
                     <div class="row px-4">
@@ -70,6 +74,16 @@
 
 {% block js %}
     <script type="text/javascript">
+        $(document).ready(function(){
+            $("#input_content").text("Autophagy maintains tumour growth through circulating arginine. Autophagy captures intracellular components and delivers them to lysosomes, where they are degraded and recycled to sustain metabolism and to enable survival during starvation1-5. Acute, whole-body deletion of the essential autophagy gene Atg7 in adult mice causes a systemic metabolic defect that manifests as starvation intolerance and gradual loss of white adipose tissue, liver glycogen and muscle mass1. Cancer cells also benefit from autophagy.");
+        });
+        $("#input_type_text").change(function(){
+            $("#input_content").text("Autophagy maintains tumour growth through circulating arginine. Autophagy captures intracellular components and delivers them to lysosomes, where they are degraded and recycled to sustain metabolism and to enable survival during starvation1-5. Acute, whole-body deletion of the essential autophagy gene Atg7 in adult mice causes a systemic metabolic defect that manifests as starvation intolerance and gradual loss of white adipose tissue, liver glycogen and muscle mass1. Cancer cells also benefit from autophagy.");
+        });
+        $("#input_type_pmid").change(function(){
+            $("#input_content").text("30429607,29446767");
+        });
+
         $(".stack-spans").click(function(){
             var content_id = "#" + $(this).attr("id").replace("stack", "stack_content");
             $(".stack-box").removeClass("d-none");
@@ -91,14 +105,13 @@
             
             var form_data = new FormData()
             //form_data.append("csrfmiddlewaretoken", $("[name='csrfmiddlewaretoken']").val());
-
             form_data.append("sample_text", sample_text);
             form_data.append("draw_keys", JSON.stringify(draw_keys));
             form_data.append("req_type", req_type);
-
             form_data.append("task_type", 'entity_extraction,entity_normalization,relation_extraction');
+
             $.ajax({
-                url: "http://8.133.174.28:8998/knowledge_extraction/knowledge_extraction", //需要更改
+                url: "http://8.133.174.28:8998/knowledge_extraction/knowledge_extraction",
                 type: "POST",
                 mimeType: "multipart/form-data",
                 processData: false,
@@ -110,22 +123,18 @@
                     console.log('-------------')
                     data = jQuery.parseJSON(data)
                     console.log(data)
-
                     $("#ke_result").html(data);
                 },
-                error: function(err) {
-
+                error: function(err){
                     console.log(err);
-
-                    }
+                }
             });
-
         };
     </script>
 {% endblock %}
 
 {% block css %}
-<style type="text/css">
+    <style type="text/css">
         .legend-entity{
             position: relative;
             padding-left: 40px;
@@ -155,31 +164,24 @@
         .span-mutation{
             background-color: rgba(55,126,184, 0.3);
         }
-
         .span-drug{
             background-color: rgba(77,175,74, 0.3);
         }
-
         .span-gene{
             background-color: rgba(152,78,163, 0.3);
         }
-
         .span-species{
         background-color: rgba(255,127,0, 0.3);
         }
-
         .span-DNA{
             background-color: rgba(255,255,51, 0.3);
         }
-
         .span-RNA{
             background-color: rgba(166,86,40, 0.3);
         }
-
         .span-cell_line{
             background-color: rgba(247,129,191, 0.3);
         }
-
         .span-cell_type{
             background-color: rgba(153,153,153, 0.3);
         }
