@@ -1,4 +1,4 @@
-{% extends 'basic.html' %}
+{% extends "basic.html" %}
 
 {% load static %}
 
@@ -45,46 +45,44 @@
                     <a href="javascript:void(0)" class="nav-nodes nav-link text-black">Genes</a>
                 </li>
             </ul>
-            <form id="list_variants" method="post" class="list-nodes form-validate border-start border-end border-bottom" style="height: 61vh; overflow-y: auto;">
+            <form id="list_variant" method="post" class="list-nodes form-validate border-start border-end border-bottom" style="height: 61vh; overflow-y: auto;">
                 {% csrf_token %}
                 <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
                 <!-- 可复制使用 -->
                 <div class="form-check px-4 py-3 border-bottom">
-                    <input name="variants" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
-                    <label for="variants" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is variant!</label>
+                    <input name="variant" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="variant" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is variant!</label>
                 </div>
             </form>
-            <form id="list_diseases" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+            <form id="list_disease" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
                 {% csrf_token %}
                 <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
                 <!-- 可复制使用 -->
                 <div class="form-check px-4 py-3 border-bottom">
-                    <input name="diseases" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
-                    <label for="diseases" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is disease!</label>
+                    <input name="disease" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="disease" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is disease!</label>
                 </div>
             </form>
-            <form id="list_drugs" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+            <form id="list_drug" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
                 {% csrf_token %}
                 <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
                 <!-- 可复制使用 -->
                 <div class="form-check px-4 py-3 border-bottom">
-                    <input name="drugs" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
-                    <label for="drugs" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is drug!</label>
+                    <input name="drug" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="drug" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is drug!</label>
                 </div>
             </form>
-            <form id="list_genes" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
+            <form id="list_gene" method="post" class="list-nodes form-validate border-start border-end border-bottom d-none" style="height: 61vh; overflow-y: auto;">
                 {% csrf_token %}
                 <div class="px-4 py-3 border-bottom"><strong>Name</strong></div>
                 <!-- 可复制使用 -->
                 <div class="form-check px-4 py-3 border-bottom">
-                    <input name="genes" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
-                    <label for="genes" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is gene!</label>
+                    <input name="gene" class="form-check-input ms-1 me-3" type="checkbox" value="title" checked>
+                    <label for="gene" class="form-check-label" style="width: 20vw; overflow: hidden;">Here is gene!</label>
                 </div>
             </form>
         </div>
-        <div class="border" style="width: 51.2vw;">
-            Here is animation!
-        </div>
+        <div id="graph-panel" class="border" style="width: 51.2vw;"></div>
     </div>
     <div id="block_relations" class="row pt-2 px-4 d-none">
         <div class="ps-4" style="width: 82vw;">
@@ -104,7 +102,6 @@
                     <div class="col-4">Here is relationship!</div>
                     <div class="col-2">Here is evidence level!</div>
                 </div>
-                
             </form>
         </div>
     </div>
@@ -135,5 +132,185 @@
             $(".list-nodes").addClass("d-none");
             $(list_nodes_id).removeClass("d-none");
         });
+        
+        // 定义关系数据，包含节点（nodes）和 关系（links），可自定义属性，颜色、坐标，文字等
+        var graphData = {
+            nodes: [],
+            links: []
+        };
+
+        function Node(entity){
+            this.id = entity.id;
+            this.label = entity.entity_name;
+            this.type = entity.entity_type;
+            this.x = Math.ceil(Math.random()*100);
+            this.y = Math.ceil(Math.random()*100); // use random number for position
+            this.properties = entity;
+        }
+
+        function Link(relation){
+            this.id = relation.rel_id;
+            this.source = relation.e1_id;
+            this.target = relation.e2_id;
+            this.label = relation.rel_type;
+            this.properties = relation
+        }
+
+        // 创建Node对象，推入关系数据
+        for(var i = 0; i < examples["entities"].length; i++){
+            var new_node = new Node(examples["entities"][i]);
+            graphData.nodes.push(new_node);
+        }
+
+        // 创建Link对象，推入关系数据
+        for(var i = 0; i < examples["triplets"].length; i++){
+            var new_link = new Link(examples["triplets"][i]);
+            graphData.links.push(new_link);
+        }
+
+        // 创建GraphVis对象，进行方法调用
+        let visGraph = new VisGraph(document.getElementById("graph-panel"), {
+            node: {
+                label: {
+                    show: true,
+                    color: "50,50,50",
+                    font: "bold 13px 微软雅黑",
+                    wrapText: false,
+                    textPosition: "Middle_Center",
+                    //textOffsetX:-24,
+                    //textOffsetY:-24,
+                    //backgroud:"255,255,255",
+                    //borderWidth:0,
+                    //borderColor:"250,250,250"
+                },
+                shape: "circle",
+                //image:"images/T1030001.svg",
+                color: "10,20,30",
+                borderColor: "255,255,255",
+                borderWidth: 2,
+                borderRadius: 0,
+                lineDash: [0],
+                alpha: 1,
+                size: 60,
+                width: 80,
+                height: 40,
+                selected: {
+                    borderColor: "50,120,230",
+                    borderAlpha: 1,
+                    borderWidth: 8,
+                    showShadow: false,
+                    shadowColor: "50,100,250"
+                },
+                onClick: function(event, node){
+                    console.log("点击节点----[" + node.id + ":" + node.label + "]");
+                },
+                ondblClick: function(event, node){
+                    console.log("双击节点");
+                },
+                onMouseDown: function(event, node){
+                    console.log("鼠标按下节点");
+                },
+                onMouseUp: function(event, node){
+                    console.log("鼠标弹起节点");
+                },
+                onMouseOver: function(event, node){
+                    console.log("鼠标移入节点");
+                },
+                onMouseOut: function(event, node){
+                    console.log("鼠标移出节点");
+                },
+                onMousedrag: function(event, node){
+                    console.log("拖动节点");
+                }
+            },
+            link: {
+                label: {
+                    show: true,
+                    color: "50,50,50",
+                    font: "normal 12px 微软雅黑"
+                },
+                lineType: "direct",
+                colorType: "defined",
+                color: "120,120,120",
+                alpha: 0.8,
+                lineWidth: 2,
+                lineDash: [0],
+                showArrow: true,
+                selected: {
+                    color: "250,50,50",
+                    alpha: 1,
+                    showShadow: false,
+                    shadowColor: "250,40,30"
+                },
+                onClick: function(event, link){
+                    console.log("click link---[" + link.source.id + "-->" + link.target.id + "]");
+                },
+                ondblClick: function(event, link){
+                }
+            },
+            highLightNeiber: false,
+            wheelZoom: 0.8,
+            noElementClick: function(event){
+                console.log("点击了空白区域");
+            },
+            layout: {
+                type: "force",
+                options: {
+                    friction: 0.9,
+                    linkDistance: 150,
+                    linkStrength: 0.05,
+                    charge: -150,
+                    gravity: 0.01,
+                    noverlap: false
+                }
+            }
+        });
+        
+        // 调用绘图方法，绘制关系图
+        console.log(visGraph)
+        visGraph.drawData(graphData);
+
+        // 开始修改节点的样式
+        // todo: 不同的entity type使用不同颜色
+        var all_nodes = visGraph.nodes;
+        for(var i = 0; i < all_nodes.length; i++){
+            var node = all_nodes[i];
+            if(node.type == "Disease"){
+                node["fillColor"] = "228,26,28"
+            }
+            if(node.type == "Mutation"){
+                node["fillColor"] = "55,126,184"
+            }
+            if(node.type == "Gene/Protein"){
+                node["fillColor"] = "152,78,163"
+            }
+            if(node.type == "Chemical/Drug"){
+                node["fillColor"] = "77,175,74"
+            }
+            if(node.type == "Species"){
+                node["fillColor"] = "255,127,0"
+            }
+            if(node.type == "DNA"){
+                node["fillColor"] = "255,255,51"
+            }
+            if(node.type == "RNA"){
+                node["fillColor"] = "166,86,40"
+            }
+            if(node.type == "cell_line"){
+                node["fillColor"] = "247,129,191"
+            }
+            if(node.type == "cell_type"){
+                node["fillColor"] = "153,153,153"
+            }
+            //console.log(all_nodes[i]);
+        }
+
+        // 开始修改连线的样式
+        var all_links = visGraph.links;
+        for(var i = 0; i < all_links.length; i++){
+            var link = all_links[i];
+            link["fillColor"] = "28,176,254"
+            //console.log(all_nodes[i]);
+        }
     </script>
 {% endblock %}
